@@ -45,13 +45,16 @@ for it in sched:
     at = datetime.datetime.fromisoformat(it["at"])
     if key in sent or at <= now + datetime.timedelta(minutes=3) or it.get("buffer") is False:
         continue
+    if os.environ.get("ONLY_DRAFT") and not it.get("draft"):
+        continue
     url = "https://raw.githubusercontent.com/hizumosss-svg/clips-media/main/" + it["file"]
     q = """mutation($i: CreatePostInput!){ createPost(input:$i){
-      ... on PostActionSuccess { post { id dueAt } }
+      ... on PostActionSuccess { post { id dueAt status } }
       ... on MutationError { message } } }"""
     inp = {"channelId": cid, "text": it["caption"], "schedulingType": "automatic", "mode": "customScheduled",
            "dueAt": at.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-           "assets": {"videos": [{"url": url}]} if os.environ.get("ASSET_STYLE") == "videos" else [{"video": {"url": url}}]}
+           "needsApproval": False, "assets": [{"video": {"url": url}}]}
+    if it.get("draft"): inp["saveToDraft"] = True
     r = gql(q, {"i": inp})
     print(key, "->", json.dumps(r)[:1500])
     post = (((r.get("data") or {}).get("createPost") or {}).get("post"))
