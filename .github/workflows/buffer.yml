@@ -1,0 +1,29 @@
+name: Buffer sync
+on:
+  push:
+    branches: [main]
+    paths: ["schedule.json"]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: probe or push
+        default: push
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: buffer
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/buffer.py ${{ github.event.inputs.mode || 'push' }}
+        env:
+          BUFFER_TOKEN: ${{ secrets.BUFFER_TOKEN }}
+      - name: Save sent list
+        run: |
+          git config user.name "Claude"
+          git config user.email "noreply@anthropic.com"
+          git add buffer_sent.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -qm "buffer sent [skip ci]"
+          git pull -q --rebase origin main || true
+          git push -q || true
