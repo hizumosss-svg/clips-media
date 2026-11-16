@@ -21,9 +21,9 @@ def tiktok_channel():
         ch = gql("query($o: OrganizationId!){ channels(input:{organizationId:$o}){ id name service isQueuePaused } }", {"o": o["id"]})
         print("channels:", json.dumps(ch)[:800])
         for c in ch.get("data", {}).get("channels", []):
-            if c["service"].lower() == "tiktok" and c["name"] == os.environ.get("BUFFER_CHANNEL", "mikola.npc"):
+            if c["id"] == os.environ.get("BUFFER_CHANNEL_ID", "6af8ee4462b70b94b0353531"):
                 return c["id"]
-    raise SystemExit("channel mikola.npc not found in Buffer")
+    raise SystemExit("Stream Clips TikTok channel (id 6af8ee4462b70b94b0353531) not found in Buffer")
 
 mode = sys.argv[1]
 if mode == "probe":
